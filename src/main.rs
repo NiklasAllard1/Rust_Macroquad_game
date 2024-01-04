@@ -6,6 +6,21 @@ struct Shape {
     x: f32,
     y: f32,
 }
+
+impl Shape {
+    fn collides_with(&self, other: &Self) -> bool {
+        self.rect().overlaps(&other.rect())
+    }
+    
+    fn rect(&self) -> Rect{
+        Rect{
+            x: self.x - self.size / 2.0,
+            y: self.y - self.size / 2.0,
+            w: self.size,
+            h: self.size,
+        }
+    }
+}
 #[macroquad::main("Mitt spel")]
 async fn main() {
     const MOVEMENT_SPEED: f32 = 200.0;
@@ -18,9 +33,12 @@ async fn main() {
         x: screen_width() / 2.0,
         y: screen_height() / 2.0,
     };
+    let mut gameover = false;
 
     loop {
         clear_background(DARKBLUE);
+
+    if !gameover {
         let delta_time = get_frame_time();
         if is_key_down(KeyCode::Right) {
             circle.x += MOVEMENT_SPEED * delta_time;
@@ -53,7 +71,18 @@ async fn main() {
         }
 
         squares.retain(|square| square.y < screen_height() + square.size);
+    }
 
+    if squares.iter().any(|square| circle.collides_with(square)) {
+        gameover = true;
+    }
+
+    if gameover && is_key_pressed(KeyCode::Space) {
+        squares.clear();
+        circle.x = screen_width() / 2.0;
+        circle.y = screen_height() / 2.0;
+        gameover = false;
+    }
         draw_circle(circle.x, circle.y, circle.size / 2.0, RED);
         for square in &squares {
             draw_rectangle(
@@ -62,6 +91,17 @@ async fn main() {
                 square.size,
                 square.size,
                 PURPLE,
+            );
+        }
+        if gameover {
+            let text = "Game Over!";
+            let text_dimensions = measure_text(text, None, 50, 1.0);
+            draw_text(
+              text,
+              screen_width() / 2.0 - text_dimensions.width / 2.0,
+              screen_height() / 2.0,
+              50.0,
+              RED,  
             );
         }
         next_frame().await
