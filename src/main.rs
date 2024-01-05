@@ -167,7 +167,20 @@ async fn main() {
               100.0,
               RED,  
             );
+            if score == high_score {
+                let text = "Congratulations, you have a new highscore!";
+                let text_dimensions = measure_text(text, None, 50, 1.0);
+                draw_text(
+                    text,
+                    screen_width() / 2.0 - text_dimensions.width / 2.0 + 240.0,
+                    screen_height() / 3.0,
+                    25.0,
+                    YELLOW,
+                );
+    
+            }
         }
+
         next_frame().await
     }
 }
