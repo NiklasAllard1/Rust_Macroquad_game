@@ -1,5 +1,5 @@
 use macroquad::prelude::*;
-
+use macroquad_particles::{self as particles, ColorCurve, Emitter, EmitterConfig};
 use std::fs;
 
 const FRAGMENT_SHADER: &str = include_str!("starfield-shader.glsl");
@@ -28,6 +28,27 @@ struct Shape {
     collided: bool,
 }
 
+fn particle_explosion() -> particles::EmitterConfig {
+    particles::EmitterConfig {
+        local_coords: false,
+        one_shot: true,
+        emitting: true,
+        lifetime: 0.6,
+        lifetime_randomness: 0.3,
+        explosiveness: 0.65,
+        initial_direction_spread: 2.0 * std::f32::consts::PI,
+        initial_velocity: 300.0,
+        initial_velocity_randomness: 0.8,
+        size: 3.0,
+        size_randomness: 0.3,
+        colors_curve: ColorCurve {
+            start: RED,
+            mid: ORANGE,
+            end: RED,
+        },
+        ..Default::default()
+    }
+}
 impl Shape {
     fn collides_with(&self, other: &Self) -> bool {
         self.rect().overlaps(&other.rect())
@@ -75,7 +96,7 @@ async fn main() {
             vertex: VERTEX_SHADER,
             fragment: FRAGMENT_SHADER,
         },
-        
+    
         MaterialParams {
             uniforms: vec![
                 ("iResolution".to_owned(), UniformType::Float2),
@@ -85,6 +106,8 @@ async fn main() {
         },
     )
     .unwrap();
+
+    let mut explosions: Vec<(Emitter, Vec2)> = vec![];
 
     loop {
         clear_background(BLACK);
@@ -111,6 +134,7 @@ async fn main() {
             if is_key_pressed(KeyCode::Space) {
                 squares.clear();
                 bullets.clear();
+                explosions.clear();
                 circle.x = screen_width() / 2.0;
                 circle.y = screen_height() / 2.0;
                 score = 0;
@@ -181,7 +205,9 @@ async fn main() {
             //Removes collided shapes
             squares.retain(|square| !square.collided);
             bullets.retain(|bullet| !bullet.collided);
-        
+
+            // Remove old explosions
+            explosions.retain(|(explosion, _)| explosions.config.emitting);
 
             //Check for collision
             if squares.iter().any(|square| circle.collides_with(square)) {
@@ -197,6 +223,13 @@ async fn main() {
                         square.collided = true;
                         score += square.size.round() as u32;
                         high_score = high_score.max(score);
+                        explosions.push((
+                            Emitter::new(EmitterConfig {
+                                amount: square.size.round() as u32 * 2,
+                                ..particle_explosion()
+                            }),
+                            vec2(square.x, square.y),
+                        ));
                     }
                 }
             }
@@ -214,7 +247,9 @@ async fn main() {
                     PURPLE,
                 );
             }
-
+            for (explosions, coords) in explosions.iter_mut() {
+                explosions.draw(*coords);
+            }
             draw_text(
                 format!("Poäng:{}", score).as_str(),
                 10.0,
