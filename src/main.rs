@@ -207,7 +207,7 @@ async fn main() {
             bullets.retain(|bullet| !bullet.collided);
 
             // Remove old explosions
-            explosions.retain(|(explosion, _)| explosions.config.emitting);
+            explosions.retain(|(explosion, _)| explosion.config.emitting);
 
             //Check for collision
             if squares.iter().any(|square| circle.collides_with(square)) {
