@@ -79,6 +79,7 @@ async fn main() {
     let theme_music = load_sound("assets/8bit-spaceshooter.ogg").await.unwrap();
     let sound_explosion = load_sound("assets/explosion.wav").await.unwrap();
     let sound_laser = load_sound("assets/laser.wav").await.unwrap();
+    let sound_hit = load_sound("assets/hit.wav").await.unwrap();
     let mut squares = vec![];
     let mut bullets: Vec<Shape> = vec![];
     let mut circle = Shape {
@@ -204,7 +205,7 @@ async fn main() {
         &theme_music,
         PlaySoundParams {
             looped: true,
-            volume: 1.,
+            volume: 0.3,
         },
     );
 
@@ -328,6 +329,7 @@ async fn main() {
                     if score == high_score {
                         fs::write("highscore.dat", high_score.to_string()).ok();
                     }
+                    play_sound_once(&sound_hit);
                     game_state = GameState::GameOver;
                 }
                 for square in squares.iter_mut() {
