@@ -1,6 +1,7 @@
 use macroquad::experimental::animation::{AnimatedSprite, Animation};
 use macroquad::prelude::*;
 use macroquad_particles::{self as particles, AtlasConfig, Emitter, EmitterConfig};
+use macroquad::audio::{load_sound, play_sound, play_sound_once, PlaySoundParams};
 
 use std::fs;
 
@@ -75,6 +76,9 @@ async fn main() {
     const MOVEMENT_SPEED: f32 = 200.0;
 
     rand::srand(miniquad::date::now() as u64);
+    let theme_music = load_sound("8bit-spaceshooter.ogg").await.unwrap();
+    let sound_explosion = load_sound("explosion.wav").await.unwrap();
+    let sound_laser = load_sound("laser.wav").await.unwrap();
     let mut squares = vec![];
     let mut bullets: Vec<Shape> = vec![];
     let mut circle = Shape {
@@ -196,6 +200,14 @@ async fn main() {
     );
     bullet_sprite.set_animation(1);
 
+    play_sound(
+        &theme_music,
+        PlaySoundParams {
+            looped: true,
+            volume: 1.,
+        },
+    );
+
     loop {
         clear_background(BLACK);
 
@@ -266,6 +278,7 @@ async fn main() {
                         size: 32.0,
                         collided: false,
                     });
+                    play_sound_once(&sound_laser);
                 }
                 if is_key_pressed(KeyCode::Escape) {
                     game_state = GameState::Paused;
@@ -332,6 +345,7 @@ async fn main() {
                                 }),
                                 vec2(square.x, square.y),
                             ));
+                            play_sound_once(&sound_explosion);
                         }
                     }
                 }
